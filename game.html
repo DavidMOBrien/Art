@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elemental Conquest - Battle</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>Elemental Conquest</h1>
+            <div class="game-turn-indicator" id="game-turn-indicator">Player 1's Turn</div>
+        </header>
+        <div class="game-main">
+            <aside class="player-sidebar" id="player1-sidebar">
+                <h2>Player 1</h2>
+                <div id="player1-team"></div>
+            </aside>
+            <div class="game-board-wrapper">
+                <div class="game-board" id="game-board"></div>
+            </div>
+            <aside class="player-sidebar" id="player2-sidebar">
+                <h2>Player 2</h2>
+                <div id="player2-team"></div>
+            </aside>
+        </div>
+        <div class="game-controls" id="game-controls">
+            <button id="restart-game" class="reset-button">Restart</button>
+        </div>
+    </div>
+    <script src="characters.js"></script>
+    <script src="game.js"></script>
+</body>
+</html> 
