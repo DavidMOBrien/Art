@@ -25,7 +25,7 @@
                 </div>
                 
                 <div class="turn-indicator" id="turn-indicator">
-                    <span class="current-player">Player 1's Turn</span>
+                    <span class="current-player" id="current-player">Player 1's Turn</span>
                     <div class="pick-counter">Round <span id="pick-number">1</span> of 3</div>
                 </div>
 
@@ -50,6 +50,7 @@
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script src="characters.js"></script>
     <script src="draft.js"></script>
 </body>

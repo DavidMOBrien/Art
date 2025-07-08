@@ -7,68 +7,51 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-let games = {}; // { roomId: { state, players: [] } }
+// Initial global state: phase, draft, battle
+let globalState = {
+  phase: 'draft',
+  draft: {
+    currentPlayer: 1,
+    currentPick: 1,
+    maxPicks: 3,
+    player1Selections: [],
+    player2Selections: [],
+    selectedCharacterId: null
+  },
+  battle: null // Will be set after draft
+};
 
 app.use(express.static('.'));
 
 io.on('connection', (socket) => {
-  let currentRoom = null;
+  console.log('New client connected:', socket.id);
+  
+  // Send the current global state to the new client
+  socket.emit('update', { state: globalState });
 
-  socket.on('join', (roomId) => {
-    currentRoom = roomId;
-    socket.join(roomId);
-    if (!games[roomId]) {
-      games[roomId] = { state: null, players: [] };
-    }
-    if (!games[roomId].players.includes(socket.id)) {
-      games[roomId].players.push(socket.id);
-    }
-    // Assign player number
-    const playerNum = games[roomId].players.indexOf(socket.id) + 1;
-    socket.emit('playerNumber', { playerNum });
-    // If two players, start the game
-    if (games[roomId].players.length === 2) {
-      // Notify both players to start the game
-      io.to(roomId).emit('startGame');
-      // If state exists, send it
-      if (games[roomId].state) {
-        io.to(roomId).emit('update', { state: games[roomId].state });
-      }
-    }
-    // If state exists, send it to new player
-    if (games[roomId].state) {
-      socket.emit('update', { state: games[roomId].state });
-    }
+  socket.on('updateState', ({ state }) => {
+    globalState = state;
+    io.emit('update', { state: globalState }); // Broadcast to all
   });
 
-  socket.on('startGame', ({ roomId, state }) => {
-    games[roomId] = { state, players: games[roomId]?.players || [] };
-    io.to(roomId).emit('update', { state });
+  socket.on('resetGame', () => {
+    globalState = {
+      phase: 'draft',
+      draft: {
+        currentPlayer: 1,
+        currentPick: 1,
+        maxPicks: 3,
+        player1Selections: [],
+        player2Selections: [],
+        selectedCharacterId: null
+      },
+      battle: null
+    };
+    io.emit('update', { state: globalState });
   });
-
-  socket.on('move', ({ roomId, move }) => {
-    // Update state (in a real game, validate move here)
-    if (games[roomId]) {
-      // You'd want to apply the move to games[roomId].state here
-      // For now, just broadcast the move
-      io.to(roomId).emit('move', { move });
-    }
-  });
-
-  socket.on('updateState', ({ roomId, state }) => {
-    if (games[roomId]) {
-      games[roomId].state = state;
-      io.to(roomId).emit('update', { state });
-    }
-  });
-
+  
   socket.on('disconnect', () => {
-    if (currentRoom && games[currentRoom]) {
-      games[currentRoom].players = games[currentRoom].players.filter(id => id !== socket.id);
-      if (games[currentRoom].players.length === 0) {
-        delete games[currentRoom];
-      }
-    }
+    console.log('Client disconnected:', socket.id);
   });
 });
 

@@ -1,10 +1,6 @@
-// Draft system state
-let currentPlayer = 1;
-let currentPick = 1;
-let maxPicks = 3;
-let player1Selections = [];
-let player2Selections = [];
-let selectedCharacterId = null;
+// Shared Draft system state (synchronized via server)
+let socket = null;
+let globalState = null;
 
 // DOM elements
 const characterGrid = document.getElementById('character-grid');
@@ -16,32 +12,33 @@ const pickNumberSpan = document.getElementById('pick-number');
 const startGameBtn = document.getElementById('start-game');
 const resetDraftBtn = document.getElementById('reset-draft');
 
-// Initialize the draft system
-function initDraft() {
-    console.log('Initializing draft system...');
-    console.log('DOM elements found:', {
-        characterGrid: !!characterGrid,
-        player1Selected: !!player1Selected,
-        player2Selected: !!player2Selected,
-        turnIndicator: !!turnIndicator,
-        currentPlayerSpan: !!currentPlayerSpan,
-        pickNumberSpan: !!pickNumberSpan,
-        startGameBtn: !!startGameBtn,
-        resetDraftBtn: !!resetDraftBtn
-    });
+function getDraft() { return globalState?.draft || {}; }
+function getPhase() { return globalState?.phase || 'draft'; }
+
+function renderDraft() {
+    const draft = getDraft();
+    console.log('renderDraft called with draft:', draft);
+    console.log('Player 1 selections:', draft.player1Selections);
+    console.log('Player 2 selections:', draft.player2Selections);
+    console.log('Max picks:', draft.maxPicks);
     
+    // Render grid and selections from shared state
     renderCharacterGrid();
     updateTurnIndicator();
     updateSelectedCharacters();
     
-    // Event listeners
-    startGameBtn.addEventListener('click', startGame);
-    resetDraftBtn.addEventListener('click', resetDraft);
+    const isComplete = draft.player1Selections.length === draft.maxPicks && draft.player2Selections.length === draft.maxPicks;
+    console.log('Draft complete check:', isComplete);
+    
+    if (isComplete) {
+        console.log('Calling completeDraft...');
+        completeDraft();
+    }
 }
 
-// Render the character grid
 function renderCharacterGrid() {
     characterGrid.innerHTML = '';
+    const draft = getDraft();
     
     // Group characters by element
     const elements = [
@@ -54,26 +51,21 @@ function renderCharacterGrid() {
     ];
     
     elements.forEach(element => {
-        // Create a column for this element
+        const charactersForElement = getCharactersByElement(element.key);
+        
         const groupColumn = document.createElement('div');
         groupColumn.className = 'element-group-column';
-        
-        // Create element header
         const groupHeader = document.createElement('div');
         groupHeader.className = 'element-group-header';
         groupHeader.style.background = element.color;
         groupHeader.style.color = element.text;
-        groupHeader.innerHTML = `<span class=\"element-group-bar\" style=\"background:${element.text}\"></span> <span class=\"element-group-title\">${element.label}</span>`;
+        groupHeader.innerHTML = `<span class="element-group-bar" style="background:${element.text}"></span> <span class="element-group-title">${element.label}</span>`;
         groupColumn.appendChild(groupHeader);
-        
-        // Create a group container with element class
         const groupContainer = document.createElement('div');
         groupContainer.className = `element-group-container ${element.key}`;
-        
-        // Add all characters of this element
-        getCharactersByElement(element.key).forEach(character => {
-            const card = createCharacterCard(character);
-            card.classList.add(element.key); // Add element class to card
+        charactersForElement.forEach(character => {
+            const card = createCharacterCard(character, draft);
+            card.classList.add(element.key);
             groupContainer.appendChild(card);
         });
         groupColumn.appendChild(groupContainer);
@@ -81,18 +73,12 @@ function renderCharacterGrid() {
     });
 }
 
-// Create a character card element
-function createCharacterCard(character) {
+function createCharacterCard(character, draft) {
     const card = document.createElement('div');
     card.className = 'character-card';
     card.dataset.characterId = character.id;
-    
-    // Check if character is already selected
-    const isSelected = player1Selections.includes(character.id) || player2Selections.includes(character.id);
-    if (isSelected) {
-        card.classList.add('disabled');
-    }
-    
+    const isSelected = draft.player1Selections.includes(character.id) || draft.player2Selections.includes(character.id);
+    if (isSelected) card.classList.add('disabled');
     card.innerHTML = `
         <img src="${character.image}" alt="${character.name}" class="character-image">
         <div class="character-name">${character.name}</div>
@@ -103,80 +89,49 @@ function createCharacterCard(character) {
             HP: ${character.hp} | ATK: ${character.attack} | DEF: ${character.defense} | MOV: ${character.movement}
         </div>
     `;
-    
-    // Add click event
     card.addEventListener('click', () => {
-        if (!isSelected) {
+        if (!isSelected && getPhase() === 'draft') {
             selectCharacter(character.id);
         }
     });
-    
     return card;
 }
 
-// Handle character selection
 function selectCharacter(characterId) {
-    console.log('Character selected:', characterId, 'by Player', currentPlayer);
-    selectedCharacterId = characterId;
-    
-    // Add to current player's selections
-    if (currentPlayer === 1) {
-        player1Selections.push(characterId);
+    const draft = { ...getDraft() };
+    draft.selectedCharacterId = characterId;
+    if (draft.currentPlayer === 1) {
+        draft.player1Selections = [...draft.player1Selections, characterId];
     } else {
-        player2Selections.push(characterId);
+        draft.player2Selections = [...draft.player2Selections, characterId];
     }
-    
-    console.log('Player 1 selections:', player1Selections);
-    console.log('Player 2 selections:', player2Selections);
-    
-    // Update UI
-    updateSelectedCharacters();
-    renderCharacterGrid();
-    
-    // Check if draft is complete
-    if (player1Selections.length === maxPicks && player2Selections.length === maxPicks) {
-        console.log('Draft complete!');
-        completeDraft();
-        // Automatically start the game after a short delay
-        setTimeout(() => {
-            startGame();
-        }, 1500);
+    if (draft.player1Selections.length === draft.maxPicks && draft.player2Selections.length === draft.maxPicks) {
+        // Draft complete, handled in renderDraft
     } else {
-        // Switch players after each pick
-        currentPlayer = currentPlayer === 1 ? 2 : 1;
-        currentPick = Math.min(player1Selections.length, player2Selections.length) + 1;
-        
-        console.log('Switched to Player', currentPlayer, 'Pick', currentPick);
-        
-        // Update turn indicator for the next player
-        updateTurnIndicator();
+        draft.currentPlayer = draft.currentPlayer === 1 ? 2 : 1;
+        draft.currentPick = Math.min(draft.player1Selections.length, draft.player2Selections.length) + 1;
     }
+    // Broadcast new draft state
+    socket.emit('updateState', { state: { ...globalState, draft } });
 }
 
-// Update the turn indicator
 function updateTurnIndicator() {
-    console.log('Updating turn indicator - Player:', currentPlayer);
-    
+    const draft = getDraft();
     if (!currentPlayerSpan || !pickNumberSpan) {
-        console.error('Turn indicator elements not found!');
+        console.error('currentPlayerSpan or pickNumberSpan not found!');
         return;
     }
     
-    currentPlayerSpan.textContent = `Player ${currentPlayer}'s Turn`;
-    
-    // Calculate accurate pick information
-    const totalPicks = player1Selections.length + player2Selections.length;
+    currentPlayerSpan.textContent = `Player ${draft.currentPlayer}'s Turn`;
+    const totalPicks = draft.player1Selections.length + draft.player2Selections.length;
     const currentRound = Math.ceil((totalPicks + 1) / 2);
-    
-    console.log('Total picks:', totalPicks, 'Current round:', currentRound);
-    
     pickNumberSpan.textContent = `${currentRound}`;
     
     // Update visual feedback for character cards
     const cards = document.querySelectorAll('.character-card');
     cards.forEach(card => {
         card.classList.remove('selected');
-        if (card.dataset.characterId === selectedCharacterId) {
+        if (card.dataset.characterId === draft.selectedCharacterId) {
             card.classList.add('selected');
         }
     });
@@ -189,7 +144,7 @@ function updateTurnIndicator() {
         player1Section.classList.remove('active');
         player2Section.classList.remove('active');
         
-        if (currentPlayer === 1) {
+        if (draft.currentPlayer === 1) {
             player1Section.classList.add('active');
         } else {
             player2Section.classList.add('active');
@@ -197,109 +152,132 @@ function updateTurnIndicator() {
     }
 }
 
-// Update the selected characters display
 function updateSelectedCharacters() {
+    const draft = getDraft();
     // Update Player 1 selections
     player1Selected.innerHTML = '';
-    for (let i = 0; i < maxPicks; i++) {
+    for (let i = 0; i < draft.maxPicks; i++) {
         const slot = document.createElement('div');
         slot.className = 'character-slot';
-        
-        if (player1Selections[i]) {
-            const character = getCharacter(player1Selections[i]);
+        if (draft.player1Selections[i]) {
+            const character = getCharacter(draft.player1Selections[i]);
             slot.innerHTML = `<img src="${character.image}" alt="${character.name}">`;
             slot.classList.add('selected');
         } else {
             slot.className = 'empty-slot';
             slot.textContent = 'Empty';
         }
-        
         player1Selected.appendChild(slot);
     }
     
     // Update Player 2 selections
     player2Selected.innerHTML = '';
-    for (let i = 0; i < maxPicks; i++) {
+    for (let i = 0; i < draft.maxPicks; i++) {
         const slot = document.createElement('div');
         slot.className = 'character-slot';
-        
-        if (player2Selections[i]) {
-            const character = getCharacter(player2Selections[i]);
+        if (draft.player2Selections[i]) {
+            const character = getCharacter(draft.player2Selections[i]);
             slot.innerHTML = `<img src="${character.image}" alt="${character.name}">`;
             slot.classList.add('selected');
         } else {
             slot.className = 'empty-slot';
             slot.textContent = 'Empty';
         }
-        
         player2Selected.appendChild(slot);
     }
 }
 
-// Complete the draft
 function completeDraft() {
-    startGameBtn.disabled = false;
-    startGameBtn.textContent = 'Starting Battle...';
+    console.log('completeDraft called');
+    console.log('startGameBtn:', startGameBtn);
     
-    // Show completion message
-    currentPlayerSpan.textContent = 'Draft Complete!';
-    pickNumberSpan.textContent = '3';
+    if (startGameBtn) {
+        startGameBtn.disabled = false;
+        startGameBtn.textContent = 'Start Battle';
+        
+        // Remove any existing click handlers and add new one
+        startGameBtn.removeEventListener('click', startBattle);
+        startGameBtn.addEventListener('click', startBattle);
+        
+        console.log('Button enabled, text changed to:', startGameBtn.textContent);
+        console.log('Button disabled state:', startGameBtn.disabled);
+        console.log('Click handler added to start button');
+    } else {
+        console.error('startGameBtn not found!');
+    }
     
-    // Add celebration effect
-    turnIndicator.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
+    if (currentPlayerSpan) {
+        currentPlayerSpan.textContent = 'Draft Complete!';
+    } else {
+        console.error('currentPlayerSpan not found!');
+    }
+    
+    if (pickNumberSpan) {
+        pickNumberSpan.textContent = '3';
+    } else {
+        console.error('pickNumberSpan not found!');
+    }
+    
+    if (turnIndicator) {
+        turnIndicator.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
+    } else {
+        console.error('turnIndicator not found!');
+    }
 }
 
-// Start the game
-function startGame() {
-    if (player1Selections.length === maxPicks && player2Selections.length === maxPicks) {
-        // Store selections in localStorage for the game to use
-        localStorage.setItem('player1Selections', JSON.stringify(player1Selections));
-        localStorage.setItem('player2Selections', JSON.stringify(player2Selections));
-        
-        // Show team summary
-        const player1Team = player1Selections.map(id => getCharacter(id).name).join(', ');
-        const player2Team = player2Selections.map(id => getCharacter(id).name).join(', ');
-        
-        // For now, show a detailed alert. In the future, this would navigate to the game
-        alert(`🎮 Game Starting!\n\nPlayer 1 Team: ${player1Team}\nPlayer 2 Team: ${player2Team}\n\nReady to battle!`);
-        
-        // Redirect to game.html
+function startBattle() {
+    console.log('Starting battle...');
+    console.log('Current globalState:', globalState);
+    console.log('Current draft:', getDraft());
+    
+    // Tell server to switch to battle phase
+    socket.emit('updateState', { state: { ...globalState, phase: 'battle' } });
+    
+    // Store selections for game.js to use
+    const draft = getDraft();
+    localStorage.setItem('player1Selections', JSON.stringify(draft.player1Selections));
+    localStorage.setItem('player2Selections', JSON.stringify(draft.player2Selections));
+    
+    console.log('Stored selections in localStorage');
+    console.log('Navigating to game.html...');
+    
+    // Navigate to game page
+    window.location.href = 'game.html';
+}
+
+function resetDraft() {
+    socket.emit('resetGame');
+}
+
+function handlePhaseSwitch() {
+    if (getPhase() === 'battle') {
+        // Store selections for game.js to use
+        const draft = getDraft();
+        localStorage.setItem('player1Selections', JSON.stringify(draft.player1Selections));
+        localStorage.setItem('player2Selections', JSON.stringify(draft.player2Selections));
         window.location.href = 'game.html';
     }
 }
 
-// Reset the draft
-function resetDraft() {
-    currentPlayer = 1;
-    currentPick = 1;
-    player1Selections = [];
-    player2Selections = [];
-    selectedCharacterId = null;
+function setupDraftMultiplayer() {
+    socket = io();
     
-    startGameBtn.disabled = true;
-    startGameBtn.textContent = 'Start Battle';
+    socket.on('update', ({ state }) => {
+        globalState = state;
+        renderDraft();
+        handlePhaseSwitch();
+    });
     
-    turnIndicator.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-    
-    // Clear active states
-    const player1Section = document.querySelector('.player-section:first-child');
-    const player2Section = document.querySelector('.player-section:last-child');
-    player1Section.classList.remove('active');
-    player2Section.classList.remove('active');
-    
-    updateTurnIndicator();
-    updateSelectedCharacters();
-    renderCharacterGrid();
+    resetDraftBtn.addEventListener('click', resetDraft);
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', initDraft);
+document.addEventListener('DOMContentLoaded', setupDraftMultiplayer);
 
 // Export functions for potential use in other modules
 window.DraftSystem = {
-    getPlayer1Selections: () => player1Selections,
-    getPlayer2Selections: () => player2Selections,
-    getCurrentPlayer: () => currentPlayer,
-    getCurrentPick: () => currentPick,
-    isDraftComplete: () => player1Selections.length === maxPicks && player2Selections.length === maxPicks
+    getPlayer1Selections: () => getDraft().player1Selections,
+    getPlayer2Selections: () => getDraft().player2Selections,
+    getCurrentPlayer: () => getDraft().currentPlayer,
+    getCurrentPick: () => getDraft().currentPick,
+    isDraftComplete: () => getDraft().player1Selections.length === getDraft().maxPicks && getDraft().player2Selections.length === getDraft().maxPicks
 }; 

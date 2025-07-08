@@ -539,4 +539,7 @@ function getCharactersByElement(element) {
             id,
             ...characters[id]
         }));
-} 
+}
+
+window.getCharacter = getCharacter;
+window.getCharactersByElement = getCharactersByElement; 
