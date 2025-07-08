@@ -295,8 +295,8 @@ const characters = {
         movement: 2,
         image: "art/terros/savatos.png"
     },
-    "tuskor": {
-        name: "Tuskor",
+    "tuskos": {
+        name: "Tuskos",
         element: "terros",
         hp: 130,
         attack: 70,
