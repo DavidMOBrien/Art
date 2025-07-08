@@ -19,6 +19,33 @@ const characters = {
         movement: 4,
         image: "art/pyros/apollos.png"
     },
+    "drumos": {
+        name: "Drumos",
+        element: "pyros",
+        hp: 100,
+        attack: 82,
+        defense: 62,
+        movement: 2,
+        image: "art/pyros/drumos.png"
+    },
+    "griffos": {
+        name: "Griffos",
+        element: "pyros",
+        hp: 85,
+        attack: 85,
+        defense: 55,
+        movement: 4,
+        image: "art/pyros/griffos.png"
+    },
+    "farbos": {
+        name: "Farbos",
+        element: "pyros",
+        hp: 95,
+        attack: 88,
+        defense: 58,
+        movement: 3,
+        image: "art/pyros/farbos.png"
+    },
     "rubanos": {
         name: "Rubanos",
         element: "pyros",
@@ -45,33 +72,6 @@ const characters = {
         defense: 45,
         movement: 4,
         image: "art/pyros/mantos.png"
-    },
-    "griffos": {
-        name: "Griffos",
-        element: "pyros",
-        hp: 85,
-        attack: 85,
-        defense: 55,
-        movement: 4,
-        image: "art/pyros/griffos.png"
-    },
-    "farbos": {
-        name: "Farbos",
-        element: "pyros",
-        hp: 95,
-        attack: 88,
-        defense: 58,
-        movement: 3,
-        image: "art/pyros/farbos.png"
-    },
-    "drumos": {
-        name: "Drumos",
-        element: "pyros",
-        hp: 100,
-        attack: 82,
-        defense: 62,
-        movement: 2,
-        image: "art/pyros/drumos.png"
     },
     "cerberos": {
         name: "Cerberos",
@@ -102,14 +102,32 @@ const characters = {
         movement: 3,
         image: "art/aquos/strikos.png"
     },
-    "stingos": {
-        name: "Stingos",
+    "rayos": {
+        name: "Rayos",
         element: "aquos",
         hp: 75,
         attack: 85,
         defense: 60,
         movement: 4,
         image: "art/aquos/stingos.png"
+    },
+    "crustos": {
+        name: "Crustos",
+        element: "aquos",
+        hp: 100,
+        attack: 75,
+        defense: 85,
+        movement: 2,
+        image: "art/aquos/crustos.png"
+    },
+    "atlantos": {
+        name: "Atlantos",
+        element: "aquos",
+        hp: 90,
+        attack: 80,
+        defense: 75,
+        movement: 3,
+        image: "art/aquos/atlantos.png"
     },
     "sharkos": {
         name: "Sharkos",
@@ -174,24 +192,6 @@ const characters = {
         movement: 5,
         image: "art/aquos/eelos.png"
     },
-    "crustos": {
-        name: "Crustos",
-        element: "aquos",
-        hp: 100,
-        attack: 75,
-        defense: 85,
-        movement: 2,
-        image: "art/aquos/crustos.png"
-    },
-    "atlantos": {
-        name: "Atlantos",
-        element: "aquos",
-        hp: 90,
-        attack: 80,
-        defense: 75,
-        movement: 3,
-        image: "art/aquos/atlantos.png"
-    },
 
     // Ventos (Wind) - High mobility, evasion
     "vultos": {
@@ -212,7 +212,7 @@ const characters = {
         movement: 4,
         image: "art/ventos/tribos.png"
     },
-    "stingos_ventos": {
+    "stingos": {
         name: "Stingos",
         element: "ventos",
         hp: 75,
@@ -277,6 +277,24 @@ const characters = {
     },
 
     // Terros (Earth) - High defense, area control
+    "cyclos": {
+        name: "Cyclos",
+        element: "terros",
+        hp: 108,
+        attack: 76,
+        defense: 84,
+        movement: 3,
+        image: "art/terros/cyclos.png"
+    },
+    "savatos": {
+        name: "Savatos",
+        element: "terros",
+        hp: 120,
+        attack: 65,
+        defense: 95,
+        movement: 2,
+        image: "art/terros/savatos.png"
+    },
     "tuskor": {
         name: "Tuskor",
         element: "terros",
@@ -295,15 +313,6 @@ const characters = {
         movement: 3,
         image: "art/terros/sphinos.png"
     },
-    "savatos": {
-        name: "Savatos",
-        element: "terros",
-        hp: 120,
-        attack: 65,
-        defense: 95,
-        movement: 2,
-        image: "art/terros/savatos.png"
-    },
     "rattlos": {
         name: "Rattlos",
         element: "terros",
@@ -313,8 +322,8 @@ const characters = {
         movement: 3,
         image: "art/terros/rattlos.png"
     },
-    "quakos": {
-        name: "Quakos",
+    "Wormos": {
+        name: "Wormos",
         element: "terros",
         hp: 115,
         attack: 70,
@@ -340,25 +349,16 @@ const characters = {
         movement: 2,
         image: "art/terros/dryos.png"
     },
-    "cyclos": {
-        name: "Cyclos",
-        element: "terros",
-        hp: 108,
-        attack: 76,
-        defense: 84,
-        movement: 3,
-        image: "art/terros/cyclos.png"
-    },
 
     // Haos (Light) - Support and purification
-    "tigros": {
-        name: "Tigros",
+    "angelos": {
+        name: "Angelos",
         element: "haos",
-        hp: 80,
-        attack: 60,
-        defense: 75,
+        hp: 92,
+        attack: 68,
+        defense: 85,
         movement: 3,
-        image: "art/haos/tigros.png"
+        image: "art/haos/angelos.png"
     },
     "tentos": {
         name: "Tentos",
@@ -368,6 +368,24 @@ const characters = {
         defense: 80,
         movement: 3,
         image: "art/haos/tentos.png"
+    },
+    "aranos": {
+        name: "Aranos",
+        element: "haos",
+        hp: 82,
+        attack: 70,
+        defense: 78,
+        movement: 3,
+        image: "art/haos/aranos.png"
+    },
+    "tigros": {
+        name: "Tigros",
+        element: "haos",
+        hp: 80,
+        attack: 60,
+        defense: 75,
+        movement: 3,
+        image: "art/haos/tigros.png"
     },
     "samuros": {
         name: "Samuros",
@@ -414,44 +432,8 @@ const characters = {
         movement: 4,
         image: "art/haos/clownos.png"
     },
-    "aranos": {
-        name: "Aranos",
-        element: "haos",
-        hp: 82,
-        attack: 70,
-        defense: 78,
-        movement: 3,
-        image: "art/haos/aranos.png"
-    },
-    "angelos": {
-        name: "Angelos",
-        element: "haos",
-        hp: 92,
-        attack: 68,
-        defense: 85,
-        movement: 3,
-        image: "art/haos/angelos.png"
-    },
 
     // Darkos (Dark) - High damage, status effects
-    "squidos": {
-        name: "Squidos",
-        element: "darkos",
-        hp: 70,
-        attack: 95,
-        defense: 45,
-        movement: 4,
-        image: "art/darkos/squidos.png"
-    },
-    "spidos": {
-        name: "Spidos",
-        element: "darkos",
-        hp: 75,
-        attack: 90,
-        defense: 50,
-        movement: 3,
-        image: "art/darkos/spidos.png"
-    },
     "reapos": {
         name: "Reapos",
         element: "darkos",
@@ -470,6 +452,15 @@ const characters = {
         movement: 5,
         image: "art/darkos/hadros.png"
     },
+    "spidos": {
+        name: "Spidos",
+        element: "darkos",
+        hp: 75,
+        attack: 90,
+        defense: 50,
+        movement: 3,
+        image: "art/darkos/spidos.png"
+    },
     "gargos": {
         name: "Gargos",
         element: "darkos",
@@ -487,6 +478,15 @@ const characters = {
         defense: 42,
         movement: 4,
         image: "art/darkos/exedros.png"
+    },
+    "squidos": {
+        name: "Squidos",
+        element: "darkos",
+        hp: 70,
+        attack: 95,
+        defense: 45,
+        movement: 4,
+        image: "art/darkos/squidos.png"
     },
     "emperos": {
         name: "Emperos",
