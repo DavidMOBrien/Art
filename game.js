@@ -70,6 +70,8 @@ let hasMovedThisTurn = false;
 // Multiplayer logic for single shared board
 let socket = null;
 
+let lastTurnPlayer = null;
+
 function serializeGameState() {
     return {
         board,
@@ -96,6 +98,11 @@ function deserializeGameState(state) {
     }
     
     if (state.currentPlayer) {
+        // Show turn overlay if the player changed
+        if (lastTurnPlayer !== null && lastTurnPlayer !== state.currentPlayer) {
+            showTurnOverlay(state.currentPlayer);
+        }
+        lastTurnPlayer = state.currentPlayer;
         currentPlayer = state.currentPlayer;
         console.log('Current player updated to:', currentPlayer);
         
@@ -197,6 +204,8 @@ function renderBoard() {
                 img.src = champ.image;
                 img.className = `champion-piece player${champ.player}`;
                 img.alt = champ.name;
+                // Add border color class based on element
+                tile.classList.add(`${champ.element}-border`);
                 tile.appendChild(img);
             }
             tile.addEventListener('click', () => onTileClick(x, y));
@@ -257,6 +266,9 @@ function onTileClick(x, y) {
                 console.log(`Attack: ${attacker.name} (${attacker.attack} ATK) attacks ${defender.name} (${defender.defense} DEF)`);
                 console.log(`Damage calculated: ${damage}`);
                 console.log(`Defender HP before: ${defender.hp}`);
+                
+                // Show floating damage number
+                showDamageFloat(x, y, damage);
                 
                 defender.hp -= damage;
                 console.log(`Defender HP after: ${defender.hp}`);
@@ -561,6 +573,24 @@ function animateAttack(x, y, element, callback) {
         tile.removeChild(overlay);
         callback();
     }, 500);
+}
+
+// Helper to show floating damage numbers
+function showDamageFloat(x, y, damage) {
+    const boardDiv = document.getElementById('game-board');
+    if (!boardDiv) return;
+    const idx = y * BOARD_SIZE + x;
+    const tile = boardDiv.children[idx];
+    if (!tile) return;
+    // Create damage float
+    const float = document.createElement('div');
+    float.className = 'damage-float';
+    float.textContent = `-${damage}`;
+    tile.style.position = 'relative';
+    tile.appendChild(float);
+    setTimeout(() => {
+        if (float.parentNode) float.parentNode.removeChild(float);
+    }, 1000);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
