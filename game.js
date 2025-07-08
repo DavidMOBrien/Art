@@ -98,6 +98,13 @@ function deserializeGameState(state) {
     if (state.currentPlayer) {
         currentPlayer = state.currentPlayer;
         console.log('Current player updated to:', currentPlayer);
+        
+        // Update the turn indicator when receiving state updates
+        const turnIndicator = document.getElementById('game-turn-indicator');
+        if (turnIndicator) {
+            turnIndicator.textContent = `Player ${currentPlayer}'s Turn`;
+            console.log('Turn indicator updated from server to:', turnIndicator.textContent);
+        }
     }
     
     console.log('Final board state after deserialization:', board);
@@ -449,6 +456,10 @@ function endTurn() {
     pulseTurnIndicator();
     showTurnOverlay(currentPlayer);
     renderBoard();
+    
+    // Synchronize the turn change to all other clients
+    console.log('Synchronizing turn change to server...');
+    sendGameState();
     
     console.log('Turn transition complete');
 }
